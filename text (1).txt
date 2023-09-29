@@ -1,0 +1,558 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <conio.h>
+#include <string.h>
+
+typedef struct Acc
+{
+    int accNum;
+    char accName[50];
+    char bMonth[10];
+    int bDay;
+    int bYear;
+    long long int contNum;
+    double balance;
+    char pin[6];
+}acc;
+
+acc a[100];
+int aCount = 0;
+
+
+void Save();
+void Load();
+
+
+void transaction(int n);
+void balanceInq(int n);
+void withdraw(int n);
+void deposit(int n);
+void fundTransfer(int n);
+void changePin(int n);
+void viewProfile(int n);
+
+
+int insertCard();
+
+void encrypt(char pin[])
+{
+    for(int i=0; i<strlen(pin); i++)
+    {
+        pin[i] = pin[i]+77;
+    }
+}
+
+
+void decrypt(char pin[])
+{
+    for(int i=0; i<strlen(pin); i++)
+    {
+        pin[i] = pin[i]-77;
+    }
+}
+
+
+void reg()
+{
+    int accNum;
+    char accName[50];
+    char bMonth[10];
+    int bDay;
+    int bYear;
+    long long int contNum;
+    double balance;
+    char pin[6];
+    int f;
+
+    printf("\n\t\t   Registration\n");
+    printf("\n\t\t|Enter the following details:\n");
+    do
+    {
+        f = 0;
+        printf("\t\t|Account Number: ");
+        scanf("%d", &accNum);
+        for(int i=0; i<aCount; i++)
+        {
+            if(accNum == a[i].accNum)
+            {
+                f = 1;
+            }
+        }
+        if(f == 1)
+        {
+            printf("\n\t\tInvalid Account Number. Already Taken.\n\n");
+        }
+    } while(f == 1);
+    fflush(stdin);
+    printf("\t\t|Name: ");
+    gets(accName);
+    printf("\t\t|Birthday\n");
+    printf("\t\t\tMonth: ");
+    gets(bMonth);
+    printf("\t\t\tDay: ");
+    scanf("%d", &bDay);
+    printf("\t\t\tYear: ");
+    scanf("%d", &bYear);
+    printf("\t\t|Contact Number: ");
+    scanf("%lld", &contNum);
+    printf("\t\t|Initial Deposit: ");
+    scanf("%lf", &balance);
+    fflush(stdin);
+    printf("\n\t\tDetails Successfully Registered!\n\n");
+    system("pause");
+    system("cls");
+
+    printf("\n\t\tEnter your PIN Code\n");
+    printf("\n\t\t|PIN Code: ");
+    gets(pin);
+    encrypt(pin);
+    printf("\t\tEncrypted PIN: %s\n", pin);
+
+    a[aCount].accNum = accNum;
+    strcpy(a[aCount].accName, accName);
+    strcpy(a[aCount].bMonth, bMonth);
+    a[aCount].bDay = bDay;
+    a[aCount].bYear = bYear;
+    a[aCount].contNum = contNum;
+    a[aCount].balance = balance;
+    strcpy(a[aCount].pin, pin);
+    aCount++;
+
+    printf("\n\t\tAccount Successfully Registered.\n\n");
+    system("pause");
+    system("cls");
+}
+
+
+void login()
+{
+    if(aCount == 0)
+    {
+        printf("\n\t\tRegister an Account First to Proceed...\n");
+        printf("\n");
+        system("pause");
+        system("cls");
+        return;
+    }
+
+    int accNum;
+    char pin[6];
+    int f = 0;
+    int c = 0;
+    int inv = 0;
+
+    printf("\n\t\tEnter Account Number: ");
+    scanf("%d", &accNum);
+    fflush(stdin);
+    for(int i=0; i<aCount; i++)
+    {
+        if(a[i].accNum == accNum)
+        {
+            f = 1;
+            do
+            {
+                printf("\n\t\tEnter PIN Code: ");
+                gets(pin);
+                decrypt(a[i].pin);
+                if(strcmp(pin, a[i].pin) != 0)
+                {
+                    printf("\n\t\tInvalid PIN Code\n");
+                    encrypt(a[i].pin);
+                    inv = 1;
+                    printf("\n");
+                    system("pause");
+                    system("cls");
+                }
+                else
+                {
+                    encrypt(a[i].pin);
+                    inv = 0;
+                    break;
+                }
+                c++;
+            } while(c < 3);
+            if(inv == 0)
+            {
+                printf("\n\t\tLogin Successful!\n");
+                printf("\n");
+                system("pause");
+                system("cls");
+                transaction(i);
+            }
+        }
+    }
+    if(f == 0)
+    {
+        printf("\n\t\tInvalid Account Number.\n");
+        printf("\n");
+        system("pause");
+        system("cls");
+    }
+}
+
+
+char home()
+{
+    char option;
+
+    printf("\n\t\t   Welcome to Bankrup\n");
+    printf("\t\t|1. Registration\n");
+    printf("\t\t|2. Login \n");
+    printf("\t\t|3. Exit\n");
+    printf("\n\t\t|Select an option: ");
+    scanf(" %c", &option);
+
+    return option;
+}
+
+int main()
+{
+    if(insertCard() == 1)
+    {
+
+        Load();
+        char h;
+        do
+        {
+            h = home();
+
+            switch(h)
+            {
+            case '1':
+                system("cls");
+                reg();
+                break;
+            case '2':
+                system("cls");
+                login();
+                break;
+            case '3':
+                printf("\n\t\tThank you for choosing our bank\n");
+                printf("\n\t\tClosing program...\n");
+                Save();
+                break;
+            default:
+                printf("\n\t\tInvalid Input\n");
+                printf("\n");
+                system("pause");
+                system("cls");
+            }
+
+        } while(h != '3');
+
+    }
+
+    return 0;
+}
+
+
+int insertCard()
+{
+    FILE *fp = fopen("MyPin.txt", "r");
+    if(fp == NULL)
+    {
+        printf("\n\t\t\nNo card found. Please insert card...\n");
+        printf("\n");
+        system("pause");
+        return 0;
+    }
+    printf("\n\t\tWelcome to our bank. The card is now inserted. You may now proceed.\n");
+    printf("\n");
+    system("pause");
+    system("cls");
+    fclose(fp);
+
+    return 1;
+}
+
+
+void transaction(int n)
+{
+    char option;
+
+    do
+    {
+        printf("\n\t\t   Transaction\n");
+        printf("\n\t\ta. Balance Inquiry\n");
+        printf("\t\tb. Withraw\n");
+        printf("\t\tc. Deposit\n");
+        printf("\t\td. Fund Transfer\n");
+        printf("\t\te. Change PIN Code\n");
+        printf("\t\tf. View My Profile\n");
+        printf("\t\tg. Close Account\n");
+        printf("\n\t\tSelect an Option: ");
+        scanf(" %c", &option);
+        fflush(stdin);
+
+        switch(option)
+        {
+        case 'a':
+        case 'A':
+            system("cls");
+            balanceInq(n);
+            printf("\n");
+            system("pause");
+            system("cls");
+            break;
+        case 'b':
+        case 'B':
+            system("cls");
+            withdraw(n);
+            printf("\n");
+            system("pause");
+            system("cls");
+            break;
+        case 'c':
+        case 'C':
+            system("cls");
+            deposit(n);
+            printf("\n");
+            system("pause");
+            system("cls");
+            break;
+        case 'd':
+        case 'D':
+            system("cls");
+            fundTransfer(n);
+            printf("\n");
+            system("pause");
+            system("cls");
+            break;
+        case 'e':
+        case 'E':
+            system("cls");
+            changePin(n);
+            printf("\n");
+            system("pause");
+            system("cls");
+            break;
+        case 'f':
+        case 'F':
+            system("cls");
+            viewProfile(n);
+            printf("\n");
+            system("pause");
+            system("cls");
+            break;
+        case 'g':
+        case 'G':
+            system("cls");
+            break;
+        default:
+            printf("\n\t\tInvalid Input\n");
+            printf("\n");
+            system("pause");
+            system("cls");
+        }
+
+    } while(option != 'g' && option != 'G');
+}
+
+
+void balanceInq(int n)
+{
+    printf("\n\t\t=== BALANCE INQUIRY ===\n");
+    printf("\n\t\tYour Balance:\n\t\t%.2lf\n", a[n].balance);
+}
+
+
+void withdraw(int n)
+{
+    double withdrawAmount;
+
+    printf("\n\t\t=== Withdraw ===\n");
+    printf("\n\t\tYour Balance:\n\t\t%.2lf\n", a[n].balance);
+    do
+    {
+        printf("\n\t\tWithdraw Amount: ");
+        scanf("%lf", &withdrawAmount);
+        if(withdrawAmount > a[n].balance)
+        {
+            printf("\n\t\tWithdraw Amount Exceeded Account Balance. Please Try Again.\n");
+            continue;
+        }
+        else if(withdrawAmount < 200)
+        {
+            printf("\n\t\tWithdraw Amount Minimum is 200. Please Try Again.\n");
+            continue;
+        }
+        else
+        {
+            printf("\n\t\tWithdraw Successful.\n");
+            printf("\t\t%.2lf\n\t\t-\n", a[n].balance);
+            printf("\t\t%.2lf\n", withdrawAmount);
+            a[n].balance -= withdrawAmount;
+            printf("\n\t\tYour Balance: %.2lf\n", a[n].balance);
+            break;
+        }
+    } while(1);
+}
+
+void deposit(int n)
+{
+    double depositAmount;
+
+    printf("\n\t\t=== Deposit ===\n");
+    printf("\n\t\tYour Balance:\n\t\t%.2lf\n", a[n].balance);
+    do
+    {
+        printf("\n\t\tDeposit Amount: ");
+        scanf("%lf", &depositAmount);
+        if(depositAmount < 5000)
+        {
+            printf("\n\t\tMinimum Deposit Amount is 5000. Please Try Again.\n");
+            continue;
+        }
+        else
+        {
+            printf("\n\t\tDeposit Successful.\n");
+            printf("\t\t%.2lf\n\t\t+\n", a[n].balance);
+            printf("\t\t%.2lf\n", depositAmount);
+            a[n].balance += depositAmount;
+            printf("\n\t\tYour Balance: %.2lf\n", a[n].balance);
+            break;
+        }
+    } while(1);
+}
+
+
+void fundTransfer(int n)
+{
+    if(aCount == 1)
+    {
+        printf("\n\t\tCannot Transfer Funds. There no other registered accounts.\n");
+        return;
+    }
+
+    int accNum;
+    int f = 0;
+    double transfer;
+
+    printf("\n\t\t=== Fund Transfer ===\n");
+    printf("\n\t\tRegistered Accounts | Account Number:\n");
+    for(int i=0; i<aCount; i++)
+    {
+        if(i == n)
+        {
+            continue;
+        }
+        printf("\t\t%d\n", a[i].accNum);
+    }
+
+    printf("\n\t\tAccount Number to Transfer Funds: ");
+    scanf("%d", &accNum);
+    for(int i=0; i<aCount; i++)
+    {
+        if(accNum == a[i].accNum && i != n)
+        {
+            f = 1;
+            do
+            {
+                printf("\n\t\tTransfer Amount: ");
+                scanf("%lf", &transfer);
+                if(transfer > a[n].balance)
+                {
+                    printf("\n\t\tTransfer Amount Exceeded Account Balance. Please Try Again.\n");
+                    continue;
+                }
+                else if(transfer < 0)
+                {
+                    printf("\n\t\tTransfer Amount Cannot be a Negative Number. Please Try Again.\n");
+                    continue;
+                }
+                else
+                {
+                    printf("\n\t\tTransfer Funds Successful.\n");
+                    printf("\t\t%.2lf\n\t\t-\n", a[n].balance);
+                    printf("\t\t%.2lf\n", transfer);
+                    a[n].balance -= transfer;
+                    printf("\n\t\tYour Balance: %.2lf\n", a[n].balance);
+
+                    printf("\n\t\tAccount %d\n", a[i].accNum);
+                    printf("\t\t%.2lf\n\t\t+\n", a[i].balance);
+                    printf("\t\t%.2lf\n", transfer);
+                    a[i].balance += transfer;
+                    printf("\n\t\tAccount %d Balance: %.2lf\n", a[i].accNum, a[i].balance);
+                    break;
+                }
+            } while(1);
+        }
+    }
+    if(f == 0)
+    {
+        printf("\n\t\tInvalid Account Number\n");
+    }
+}
+
+
+void changePin(int n)
+{
+    char newPin[6];
+
+    printf("\n\t\t=== Change PIN ===\n");
+    printf("\n\t\tEncrypted PIN: %s\n", a[n].pin);
+    decrypt(a[n].pin);
+    printf("\t\tDecrypted PIN: %s\n", a[n].pin);
+    printf("\n\t\tEnter new PIN Code: ");
+    gets(newPin);
+    strcpy(a[n].pin, newPin);
+    encrypt(a[n].pin);
+    printf("\n\t\tPIN Code Successfully Changed.\n");
+}
+
+
+void viewProfile(int n)
+{
+    printf("\n\t\t=== View Profile ===\n");
+    printf("\n\t\tAccount Number: %d\n", a[n].accNum);
+    printf("\t\tName: %s\n", a[n].accName);
+    printf("\t\tBirthday: %s %d, %d\n", a[n].bMonth, a[n].bDay, a[n].bYear);
+    printf("\t\tContact Number: %lld\n", a[n].contNum);
+    printf("\t\tBalance: %.2lf\n", a[n].balance);
+    printf("\t\tPIN Code (encrypted): %s\n", a[n].pin);
+}
+
+
+void Save()
+{
+    FILE *fp = fopen("MyPin.txt", "w");
+
+    fprintf(fp, "%d\n", aCount);
+    for(int i=0; i<aCount; i++)
+    {
+        fprintf(fp, "%d\n", a[i].accNum);
+        fprintf(fp, "%s\n", a[i].accName);
+        fprintf(fp, "%s\n", a[i].bMonth);
+        fprintf(fp, "%d\n", a[i].bDay);
+        fprintf(fp, "%d\n", a[i].bYear);
+        fprintf(fp, "%lld\n", a[i].contNum);
+        fprintf(fp, "%lf\n", a[i].balance);
+        decrypt(a[i].pin);
+        fprintf(fp, "%s\n", a[i].pin);
+    }
+
+    fclose(fp);
+}
+
+void Load()
+{
+    FILE *fp = fopen("MyPin.txt", "r");
+
+    fscanf(fp, "%d\n", &aCount);
+    for(int i=0; i<aCount; i++)
+    {
+        fscanf(fp, "%d\n", &a[i].accNum);
+        fgets(a[i].accName, 50, fp);
+        a[i].accName[strlen(a[i].accName) - 1] = '\0';
+        fgets(a[i].bMonth, 10, fp);
+        a[i].bMonth[strlen(a[i].bMonth) - 1] = '\0';
+        fscanf(fp, "%d\n", &a[i].bDay);
+        fscanf(fp, "%d\n", &a[i].bYear);
+        fscanf(fp, "%lld\n", &a[i].contNum);
+        fscanf(fp, "%lf\n", &a[i].balance);
+        fgets(a[i].pin, 6, fp);
+        a[i].pin[strlen(a[i].pin) - 1] = '\0';
+        encrypt(a[i].pin);
+    }
+    fclose(fp);
+}
